@@ -1,3 +1,4 @@
+![Latest Release](https://img.shields.io/github/v/release/isrgrajan/BulkFieldSignerGUI) ![Downloads](https://img.shields.io/github/downloads/isrgrajan/BulkFieldSignerGUI/total)
 # BulkFieldSignerGUI
 ### Bulk PDF Digital Signature Tool for DSC (USB Token) | Court e-Filing PDF Signer
 
@@ -104,6 +105,13 @@ BulkFieldSignerGUI is designed with **data privacy in mind**.
 This is particularly important when working with **legal documents, court filings, and confidential case materials**.
 
 ---
+# Download
+
+Download the latest installer:
+
+[Download Latest Version](https://github.com/isrgrajan/BulkFieldSignerGUI/releases/latest)
+
+---
 
 # Command Line Installation
 
@@ -130,14 +138,6 @@ Uninstall:
 ```bash
 msiexec /x BulkFieldSignerGUI-1.0.0.msi
 ```
-
----
-
-# Download
-
-Download the latest installer:
-
-https://github.com/isrgrajan/BulkFieldSignerGUI/releases/latest
 
 ---
 
