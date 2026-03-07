@@ -1,4 +1,7 @@
-![Latest Release](https://img.shields.io/github/v/release/isrgrajan/BulkFieldSignerGUI) ![Downloads](https://img.shields.io/github/downloads/isrgrajan/BulkFieldSignerGUI/total)
+
+[![Latest Release](https://img.shields.io/github/v/release/isrgrajan/BulkFieldSignerGUI)](https://github.com/isrgrajan/BulkFieldSignerGUI/releases) [![Downloads](https://img.shields.io/github/downloads/isrgrajan/BulkFieldSignerGUI/total)](https://github.com/isrgrajan/BulkFieldSignerGUI/releases)
+
+
 # BulkFieldSignerGUI
 ### Bulk PDF Digital Signature Tool for DSC (USB Token) | Court e-Filing PDF Signer
 
