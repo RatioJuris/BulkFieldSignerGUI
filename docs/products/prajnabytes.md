@@ -120,8 +120,7 @@ The sealed sample document, with its stamp:
   are made.
 * **Linux and macOS:** packages for Linux (x64, arm64) and macOS (Apple
   silicon, Intel) are built, installed and started by automated tests. Signing
-  with a real DSC token on Linux or macOS has not been verified. The macOS app
-  is not signed with an Apple Developer ID or notarized.
+  with a real DSC token on Linux or macOS has not been verified.
 * **Runtime:** included in every download (Microsoft Build of OpenJDK 25);
   nothing else needs to be installed.
 * **For DSC signing:** a Digital Signature Certificate available in your Windows
@@ -181,6 +180,24 @@ Developed by **PrajnaBytes International Private Limited | RatioJuris**.
   administrator rights) or the portable `.zip`. Packages for Linux (`.deb`,
   `.tar.gz`) and macOS (`.dmg`) are also attached; see the system requirements
   for their status.
+
+### Open and verifiable
+
+PDF DSC-TSA Bulk Signer is independent open-source software. Its complete
+source code is public, and every release lists SHA-256 checksums
+(`SHA256SUMS.txt`) so you can confirm that your download is genuine.
+
+Commercial code-signing certificates are a recurring paid service that this
+project does not currently use. The first time you open the application,
+Windows or macOS may therefore show a security notice for an unrecognised
+publisher:
+
+* **Windows:** if you see "Windows protected your PC", click **More info**,
+  then **Run anyway**.
+* **macOS:** try to open the application once, then open **System Settings →
+  Privacy & Security**, click **Open Anyway** next to the message about PDF
+  DSC-TSA Bulk Signer, and confirm. On macOS 14 and older, you can instead
+  right-click the application and choose **Open**.
 
 ## Get started
 
