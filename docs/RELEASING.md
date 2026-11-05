@@ -114,7 +114,7 @@ and `xcrun stapler staple` in the workflow.
 
    ```text
    java -cp "BulkFiledSigner.jar;lib/*" tools/ReleaseTool.java manifest --version 2.1.0 --type B \
-        --packages <folder> --key C:\pdfsign\release-signing\update-signing-ed25519.pk8 --out <folder>
+        --packages <folder> --key D:\OneDriveBiz\Github\RatioJuris\release-signing\update-signing-ed25519.pk8 --out <folder>
    ```
 
    - **Type A security release:** `--type A --security --reason "Fixes …; signing is unsafe until updated."`
@@ -132,7 +132,8 @@ and `xcrun stapler staple` in the workflow.
 ## The signing key
 
 - The private key (`update-signing-ed25519.pk8`) is kept outside the repository, at
-  `C:\pdfsign\release-signing\` on the maintainer's machine. Back it up securely and offline.
+  `D:\OneDriveBiz\Github\RatioJuris\release-signing\` on the maintainer's machine (next to the
+repository folder, never inside it). Back it up securely and offline.
 - If the key is lost, installed copies cannot verify new releases. Users must then reinstall a version
   built with a new key.
 - To rotate the key, publish a release, signed with the **old** key, that contains the new public key
