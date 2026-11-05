@@ -30,6 +30,10 @@ public class Package {
     static final String DESCRIPTION = "Visible stamps on every page, secured by one DSC signature or RFC 3161 timestamp seal.";
     static final String COPYRIGHT = "Copyright (C) 2026 " + DEVELOPER + ". GPL-3.0-or-later.";
     static final String JAR = "BulkFiledSigner.jar";
+    /** Windows launcher file name (bulksigner.exe): lowercase, without spaces or special characters. */
+    static final String WINDOWS_LAUNCHER = "bulksigner";
+    /** MSI installation folder, under Program Files. */
+    static final String WINDOWS_INSTALL_DIR = "RatioJuris\\BulkFieldSignerGUI";
 
     final Path project = Path.of("").toAbsolutePath();
     final Map<String, String> options = new HashMap<>();
@@ -130,13 +134,17 @@ public class Package {
         command.addAll(applicationOptions(input, runtime, channel));
         command.addAll(List.of("--dest", destination.toString()));
         exec(command.toArray(String[]::new));
-        return destination.resolve(os.equals("macos") ? NAME + ".app" : NAME);
+        return destination.resolve(os.equals("macos") ? NAME + ".app" : launcherName());
     }
+
+    /** jpackage names the launcher (and the app image folder) after --name. */
+    String launcherName() { return os.equals("windows") ? WINDOWS_LAUNCHER : NAME; }
 
     /** jpackage options describing the application itself, stamped with its installation channel. */
     List<String> applicationOptions(Path input, Path runtime, String channel) throws Exception {
-        List<String> options = new ArrayList<>(List.of("--name", NAME, "--app-version", version, "--vendor", VENDOR, "--copyright", COPYRIGHT,
-                "--description", DESCRIPTION, "--input", input.toString(), "--main-jar", JAR, "--main-class", "AppLauncher",
+        // Windows shows the description as the program's name in Task Manager, so it is the product name there.
+        List<String> options = new ArrayList<>(List.of("--name", launcherName(), "--app-version", version, "--vendor", VENDOR, "--copyright", COPYRIGHT,
+                "--description", os.equals("windows") ? NAME : DESCRIPTION, "--input", input.toString(), "--main-jar", JAR, "--main-class", "AppLauncher",
                 "--runtime-image", runtime.toString(), "--java-options", "--enable-native-access=ALL-UNNAMED",
                 "--java-options", "-Dpdfsigner.channel=" + channel, "--icon", icon().toString()));
         if (os.equals("macos")) options.addAll(List.of("--mac-package-identifier", "com.prajnabytes.pdfdsctsabulksigner", "--mac-package-name", "PDF DSC-TSA"));
@@ -185,7 +193,7 @@ public class Package {
                     zipOut.closeEntry();
                 }
             }
-            addText(zipOut, top + "/README.txt", portableReadme("Windows", "Double-click \"" + NAME + ".exe\"."));
+            addText(zipOut, top + "/README.txt", portableReadme("Windows", "Double-click \"" + WINDOWS_LAUNCHER + ".exe\"."));
             addFile(zipOut, top + "/LICENSE.txt", project.resolve("LICENSE"));
             addFile(zipOut, top + "/THIRD-PARTY-NOTICES.md", project.resolve("THIRD-PARTY-NOTICES.md"));
         }
@@ -195,26 +203,53 @@ public class Package {
 
     Path msi(Path input, Path runtime) throws Exception {
         Path destination = work.resolve("msi");
-        // The 2.x product line's own upgrade code. 1.0 was a per-machine installation; a per-user
-        // 2.x MSI cannot upgrade it, so 2.x installs alongside and 1.0 is uninstalled separately.
+        // The upgrade code of the 1.0 installer (also per-machine), so installing 2.x replaces 1.0.
         String upgrade = Files.readString(project.resolve("res/msi-upgrade-code.txt")).strip();
         if (!upgrade.matches("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")) {
             throw new IllegalStateException("res/msi-upgrade-code.txt must contain the MSI upgrade UUID");
         }
         // Built from the application files in one step (not from a prepared app image): jpackage then takes the
         // Apps & features icon from the iconed launcher instead of an un-iconed launcher template.
+        // Per-machine: C:\Program Files\RatioJuris\BulkFieldSignerGUI\bulksigner.exe, for all users.
         List<String> command = new ArrayList<>(List.of(tool("jpackage"), "--type", "msi"));
         command.addAll(applicationOptions(input, runtime, "windows-msi"));
-        command.addAll(List.of("--dest", destination.toString(), "--win-upgrade-uuid", upgrade, "--win-per-user-install", "--win-menu",
-                "--win-menu-group", NAME, "--win-shortcut", "--license-file", project.resolve("LICENSE").toString()));
+        command.addAll(List.of("--dest", destination.toString(), "--win-upgrade-uuid", upgrade, "--install-dir", WINDOWS_INSTALL_DIR,
+                "--win-menu", "--win-menu-group", NAME, "--win-shortcut", "--license-file", project.resolve("LICENSE").toString()));
         exec(env -> { if (options.containsKey("wix")) env.put("PATH", options.get("wix") + java.io.File.pathSeparator + env.getOrDefault("PATH", env.getOrDefault("Path", ""))); },
                 command.toArray(String[]::new));
         Path msi;
         try (var files = Files.list(destination)) { msi = files.filter(p -> p.toString().endsWith(".msi")).findFirst().orElseThrow(); }
+        displayProductName(msi);
         Path target = out.resolve(FILE_PREFIX + version + "-" + platform + ".msi");
         Files.move(msi, target, StandardCopyOption.REPLACE_EXISTING);
         log("MSI: " + target);
         return target;
+    }
+
+    /**
+     * jpackage uses --name (the launcher name, "bulksigner") for the product and shortcut names. Users see the
+     * product name instead: in Apps & features, the installer dialogs and the Start menu and desktop shortcuts.
+     */
+    void displayProductName(Path msi) throws Exception {
+        String sql = project.resolve("tools/msi-sql.js").toString();
+        List<String> shortcuts = capture("cscript", "//nologo", sql, msi.toString(), "SELECT Shortcut, Name FROM Shortcut").lines()
+                .filter(line -> line.contains(" | ")).toList();
+        if (shortcuts.isEmpty()) throw new IllegalStateException("The MSI has no shortcuts to rename.");
+        List<String> statements = new ArrayList<>(List.of("UPDATE Property SET Value = '" + NAME + "' WHERE Property = 'ProductName'"));
+        for (String row : shortcuts) {
+            String[] fields = row.split(" \\| ", 2);
+            String shortName = fields[1].contains("|") ? fields[1].substring(0, fields[1].indexOf('|')) : fields[1];
+            statements.add("UPDATE Shortcut SET Name = '" + shortName + "|" + NAME + "' WHERE Shortcut = '" + fields[0].strip() + "'");
+        }
+        List<String> run = new ArrayList<>(List.of("cscript", "//nologo", sql, msi.toString()));
+        run.addAll(statements);
+        exec(run.toArray(String[]::new));
+        String check = capture("cscript", "//nologo", sql, msi.toString(), "SELECT Value FROM Property WHERE Property = 'ProductName'",
+                "SELECT Name FROM Shortcut");
+        log("MSI display names:\n" + check.strip());
+        if (!check.contains(NAME) || check.lines().filter(line -> line.endsWith("|" + NAME)).count() != shortcuts.size()) {
+            throw new IllegalStateException("The MSI display names could not be set: " + check);
+        }
     }
 
     /**
@@ -258,7 +293,7 @@ public class Package {
                   </Applications>
                   <Capabilities><rescap:Capability Name="runFullTrust"/></Capabilities>
                 </Package>
-                """.formatted(xml(identity), xml(publisher), version, arch, xml(NAME), xml(publisherName), xml(DESCRIPTION), xml(NAME), xml(NAME), xml(DESCRIPTION));
+                """.formatted(xml(identity), xml(publisher), version, arch, xml(NAME), xml(publisherName), xml(DESCRIPTION), xml(WINDOWS_LAUNCHER), xml(NAME), xml(DESCRIPTION));
         Files.writeString(layout.resolve("AppxManifest.xml"), manifest);
         Path target = out.resolve(FILE_PREFIX + version + "-" + platform + (store ? "" : "-validation") + ".msix");
         Files.deleteIfExists(target);
@@ -338,7 +373,7 @@ public class Package {
             Path extracted = work.resolve("smoke-portable");
             deleteTree(extracted);
             unzip(artifact, extracted);
-            Path exe = extracted.resolve(NAME + " " + version).resolve(NAME + ".exe");
+            Path exe = extracted.resolve(NAME + " " + version).resolve(WINDOWS_LAUNCHER + ".exe");
             runSmoke(report, exe.toString());
         } else if (name.endsWith(".tar.gz")) {
             Path extracted = Files.createDirectories(work.resolve("smoke-tar"));
@@ -355,31 +390,27 @@ public class Package {
     }
 
     void smokeMsi(Path msi, Path report) throws Exception {
-        Path log = work.resolve("msi-install.log");
-        exec("msiexec", "/i", msi.toString(), "/qn", "/norestart", "/l*v", log.toString());
+        msiexec("/i", msi, work.resolve("msi-install.log"));
         try {
-            Path exe = findInstalledExe();
+            Path exe = installedExe();
+            if (!Files.isRegularFile(exe)) throw new IllegalStateException("The MSI did not install " + exe);
             log("MSI installed launcher: " + exe);
             runSmoke(report, exe.toString());
         } finally {
-            exec("msiexec", "/x", msi.toString(), "/qn", "/norestart", "/l*v", work.resolve("msi-uninstall.log").toString());
-            log("MSI uninstalled. Launcher still present: " + (findInstalledExeOrNull() != null));
+            msiexec("/x", msi, work.resolve("msi-uninstall.log"));
+            log("MSI uninstalled. Launcher still present: " + Files.exists(installedExe()));
         }
     }
 
-    Path findInstalledExe() throws IOException {
-        Path exe = findInstalledExeOrNull();
-        if (exe == null) throw new IllegalStateException("The MSI did not install " + NAME + ".exe under %LOCALAPPDATA%.");
-        return exe;
+    /** Per-machine installations need administrator rights: an elevated build (CI) runs directly, otherwise Windows asks once. */
+    void msiexec(String action, Path msi, Path log) throws Exception {
+        String arguments = action + " \"" + msi + "\" /qn /norestart /l*v \"" + log + "\"";
+        exec("powershell.exe", "-NoProfile", "-NonInteractive", "-Command",
+                "$p = Start-Process msiexec.exe -ArgumentList '" + arguments.replace("'", "''") + "' -Verb RunAs -Wait -PassThru; exit $p.ExitCode");
     }
 
-    Path findInstalledExeOrNull() throws IOException {
-        Path local = Path.of(System.getenv("LOCALAPPDATA"));
-        for (Path base : List.of(local.resolve(NAME), local.resolve("Programs").resolve(NAME))) {
-            Path exe = base.resolve(NAME + ".exe");
-            if (Files.isRegularFile(exe)) return exe;
-        }
-        return null;
+    Path installedExe() {
+        return Path.of(System.getenv().getOrDefault("ProgramFiles", "C:\\Program Files")).resolve(WINDOWS_INSTALL_DIR).resolve(WINDOWS_LAUNCHER + ".exe");
     }
 
     void runSmoke(Path report, String launcher) throws Exception {

@@ -41,7 +41,7 @@ class UpdateInstallTest {
     }
 
     @Test void zipPackagesExtractOnlyUnderTheExpectedFolder() throws Exception {
-        Path ok = zip(TOP + "/", "", TOP + "/app/readme.txt", "hello", TOP + "/" + UpdateInstaller.APP_FOLDER + ".exe", "MZ");
+        Path ok = zip(TOP + "/", "", TOP + "/app/readme.txt", "hello", TOP + "/" + Product.WINDOWS_LAUNCHER + ".exe", "MZ");
         Path destination = work.resolve("ok");
         UpdateArchive.extract(ok, TOP, destination);
         assertEquals("hello", Files.readString(destination.resolve("app/readme.txt")));
@@ -149,7 +149,7 @@ class UpdateInstallTest {
         manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
         manifest.getMainAttributes().put(Attributes.Name.IMPLEMENTATION_VERSION, version);
         try (JarOutputStream jar = new JarOutputStream(Files.newOutputStream(app.resolve(UpdateInstaller.JAR)), manifest)) { jar.putNextEntry(new ZipEntry("x")); }
-        Files.writeString(app.resolve(UpdateInstaller.APP_FOLDER + ".cfg"), "[JavaOptions]\njava-options=-Dpdfsigner.channel=" + channel.id() + "\n");
+        Files.writeString(app.resolve(UpdateInstaller.launcherConfig(layout)), "[JavaOptions]\njava-options=-Dpdfsigner.channel=" + channel.id() + "\n");
         Path launcher = UpdateInstaller.launcher(image, layout);
         Files.createDirectories(launcher.getParent());
         Files.writeString(launcher, "launcher");
@@ -166,6 +166,8 @@ class UpdateInstallTest {
         Path msiImage = image("2.1.0", Platform.Channel.WINDOWS_MSI, Platform.Channel.WINDOWS_PORTABLE);
         assertThrows(UpdateException.class, () -> UpdateInstaller.verifyImage(msiImage, Platform.Channel.WINDOWS_PORTABLE, v210),
                 "An image built for another channel (MSI) is rejected by a portable copy");
+        assertEquals("bulksigner.exe", UpdateInstaller.launcher(work, Platform.Channel.WINDOWS_PORTABLE).getFileName().toString(),
+                "The Windows launcher is lowercase, without spaces or special characters");
         Path missing = image("2.1.0", Platform.Channel.WINDOWS_PORTABLE);
         Files.delete(UpdateInstaller.launcher(missing, Platform.Channel.WINDOWS_PORTABLE));
         assertThrows(UpdateException.class, () -> UpdateInstaller.verifyImage(missing, Platform.Channel.WINDOWS_PORTABLE, v210));

@@ -19,18 +19,19 @@ Requires 64-bit Windows 10 or 11. Tested on Windows 11 Pro 23H2.
 
 **Portable (`…-windows-x64-portable.zip`).** This is not an installer.
 1. Extract the ZIP to any folder you can write to.
-2. Open `PDF DSC-TSA Bulk Signer 2.0.0` and run `PDF DSC-TSA Bulk Signer.exe`.
+2. Open `PDF DSC-TSA Bulk Signer 2.0.0` and run `bulksigner.exe`.
 
 No administrator rights are needed. When an update is installed, the new version is placed in a
 folder next to the current one and started; the old folder can then be deleted.
 
 **Installer (`…-windows-x64.msi`).**
-- Installs for the current user only, under `%LOCALAPPDATA%\PDF DSC-TSA Bulk Signer`, with a Start
-  menu entry and a desktop shortcut. No administrator rights are needed.
+- Installs for all users in `C:\Program Files\RatioJuris\BulkFieldSignerGUI` (launcher `bulksigner.exe`),
+  with a Start menu entry and a desktop shortcut named **PDF DSC-TSA Bulk Signer**. Windows asks for
+  administrator approval (UAC) during installation.
 - Uninstall from Settings → Apps. Your settings and documents are kept.
-- Later versions upgrade the installation in place.
-- **Version 1.0 ("BulkFieldSignerGUI")** was installed for all users. Version 2.0 installs alongside it
-  and does not remove it. Uninstall 1.0 from Settings → Apps (this needs an administrator).
+- Later versions upgrade the installation in place; Windows asks for administrator approval again.
+- **Version 1.0 ("BulkFieldSignerGUI")** is removed automatically when 2.0 is installed (both share
+  the same installer upgrade code).
 
 **Microsoft Store.** Not yet published. The Store installs updates for Store copies; the application
 never installs GitHub packages over them.

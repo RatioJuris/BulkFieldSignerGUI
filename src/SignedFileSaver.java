@@ -53,6 +53,23 @@ public final class SignedFileSaver {
         save(target);
     }
 
+    /**
+     * Signing can take a while (token PIN window, timestamp server), and the user may have switched to another
+     * program meanwhile. Windows then opens the Save window behind it, where it is easily missed. The application
+     * window is therefore restored and raised, and kept above other programs while the Save window is open.
+     */
+    private void bringToFront() {
+        if ((gui.getExtendedState() & java.awt.Frame.ICONIFIED) != 0) gui.setExtendedState(gui.getExtendedState() & ~java.awt.Frame.ICONIFIED);
+        gui.setAlwaysOnTop(true);
+        gui.toFront();
+        gui.requestFocus();
+        try {
+            if (java.awt.Taskbar.isTaskbarSupported() && java.awt.Taskbar.getTaskbar().isSupported(java.awt.Taskbar.Feature.USER_ATTENTION_WINDOW)) {
+                java.awt.Taskbar.getTaskbar().requestWindowUserAttention(gui);
+            }
+        } catch (RuntimeException ignored) { /* Flashing the taskbar button is only a hint. */ }
+    }
+
     private Path chooseLocation() {
         while (true) {
             FileDialog dialog = new FileDialog(gui, seal ? "Save the sealed PDF" : "Save the signed PDF", FileDialog.SAVE);
@@ -60,10 +77,14 @@ public final class SignedFileSaver {
             dialog.setFile(suggestedName(gui.getDocumentName(), seal));
             Path chosen;
             try {
+                bringToFront();
                 dialog.setVisible(true);
                 if (dialog.getFile() == null) return null;
                 chosen = Path.of(dialog.getDirectory(), dialog.getFile()).toAbsolutePath().normalize();
-            } finally { dialog.dispose(); }
+            } finally {
+                dialog.dispose();
+                gui.setAlwaysOnTop(false);
+            }
             if (!chosen.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".pdf")) chosen = chosen.resolveSibling(chosen.getFileName() + ".pdf");
             Path original = gui.getSourceFile();
             if (original != null && chosen.equals(original.toAbsolutePath().normalize())) {

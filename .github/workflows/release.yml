@@ -134,6 +134,7 @@ jobs:
           $installed = Get-AppxPackage -Name $manifest.Package.Identity.Name
           if (-not $installed) { throw 'MSIX package did not install' }
           Write-Host "Installed: $($installed.PackageFullName) at $($installed.InstallLocation)"
+          if (-not (Test-Path (Join-Path $installed.InstallLocation 'bulksigner.exe'))) { throw 'MSIX package has no bulksigner.exe' }
           Remove-AppxPackage -Package $installed.PackageFullName
           Write-Host 'MSIX install and removal succeeded. Launch inside the package container is not automated.'
 

@@ -14,11 +14,15 @@ Licensed under the GNU General Public License v3.0 or later (previously a propri
 - File dialogs start in Documents or the last folder used
 - Certificate list limited to personal signing certificates; expired DSCs and unplugged tokens shown disabled
 - DSC tokens through PKCS#11 libraries (needed on Linux and macOS)
-- Packages for Windows (portable ZIP, per-user MSI, MSIX for the Microsoft Store), Linux (tar.gz, .deb)
+- Packages for Windows (portable ZIP; MSI installing for all users in
+  `C:\Program Files\RatioJuris\BulkFieldSignerGUI` with the launcher `bulksigner.exe`; MSIX for the
+  Microsoft Store), Linux (tar.gz, .deb)
   and macOS (.dmg), each with a bundled Microsoft Build of OpenJDK 25 runtime
 - GitHub-based automatic updates with signed release metadata and Type A (mandatory), B (important)
   and C (optional) classifications
-- Version 2.0 installs alongside 1.0; uninstall 1.0 separately (it was installed for all users)
+- The 2.0 installer replaces version 1.0 automatically
+- After signing, the application comes to the front before the Save window opens, so the Save window
+  is not hidden behind other programs
 - Verified after release: DSC signing with a real HyperPKI HYP2003 token (Verasys DSC) on Windows 11,
   with and without a DigiCert timestamp
 

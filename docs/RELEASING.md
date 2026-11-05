@@ -52,7 +52,7 @@ How each type is enforced:
 | Channel (`-Dpdfsigner.channel`) | Package | Manifest key | How the update is applied |
 | --- | --- | --- | --- |
 | `windows-portable` | `PDF-DSC-TSA-Bulk-Signer-<v>-windows-x64-portable.zip` | `windows-x64-portable` | Extracted and verified next to the current folder, started, and confirmed; the old folder is kept |
-| `windows-msi` | `PDF-DSC-TSA-Bulk-Signer-<v>-windows-x64.msi` | `windows-x64-msi` | After the app exits, Windows Installer upgrades the per-user installation (`/passive`, logged) and restarts it |
+| `windows-msi` | `PDF-DSC-TSA-Bulk-Signer-<v>-windows-x64.msi` | `windows-x64-msi` | After the app exits, Windows Installer upgrades the per-machine installation in `C:\Program Files\RatioJuris\BulkFieldSignerGUI` (UAC prompt, `/passive`, logged) and restarts it |
 | `windows-store` | `.msix` (Partner Center only) | none | Microsoft Store only; GitHub packages are never installed over it |
 | `linux-portable` | `PDF-DSC-TSA-Bulk-Signer-<v>-linux-<arch>.tar.gz` | `linux-<arch>-portable` | Extracted and verified next to the current folder, started, and confirmed |
 | `linux-deb` | `PDF-DSC-TSA-Bulk-Signer-<v>-linux-<arch>.deb` | `linux-<arch>-deb` | Verified, then opened with the system installer (administrator rights) |

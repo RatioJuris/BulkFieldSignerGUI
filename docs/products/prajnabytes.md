@@ -114,9 +114,10 @@ The sealed sample document, with its stamp:
 
 * **Operating system:** Windows, 64-bit (x64). Built and tested on Windows 11 Pro
   (version 10.0.22631). Other Windows versions: TODO (not yet verified).
-* **Account:** a standard Windows user account. No administrator rights are
-  needed: the installer installs for your user only, and the portable version
-  needs no installation. No Windows service or system certificate-store changes
+* **Installation:** the installer installs for all users in
+  `C:\Program Files\RatioJuris\BulkFieldSignerGUI` and asks for administrator
+  approval once. The portable version needs no installation and no
+  administrator rights. No Windows service or system certificate-store changes
   are made.
 * **Linux and macOS:** packages for Linux (x64, arm64) and macOS (Apple
   silicon, Intel) are built, installed and started by automated tests. Signing
@@ -178,8 +179,8 @@ Developed by **PrajnaBytes International Private Limited | RatioJuris**.
 
 * **Source code:** <https://github.com/RatioJuris/BulkFieldSignerGUI>
 * **Download:** <https://github.com/RatioJuris/BulkFieldSignerGUI/releases/tag/v2.0.0>.
-  For Windows, choose the installer (`.msi`, installs for your user without
-  administrator rights) or the portable `.zip`. Packages for Linux (`.deb`,
+  For Windows, choose the installer (`.msi`, installs for all users and
+  replaces version 1.0) or the portable `.zip`. Packages for Linux (`.deb`,
   `.tar.gz`) and macOS (`.dmg`) are also attached; see the system requirements
   for their status.
 

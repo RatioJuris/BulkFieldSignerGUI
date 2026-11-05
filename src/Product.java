@@ -3,6 +3,8 @@
 /** Product identity shown in the application. Change only with the maintainers' approval. */
 public final class Product {
     public static final String NAME = "PDF DSC-TSA Bulk Signer";
+    /** File name of the Windows launcher (bulksigner.exe): lowercase, without spaces or special characters. */
+    public static final String WINDOWS_LAUNCHER = "bulksigner";
     public static final String VERSION = "2.0";
     public static final String DEVELOPER = "PrajnaBytes International Private Limited | RatioJuris";
     public static final String LICENSE = "GNU General Public License v3.0 or later";

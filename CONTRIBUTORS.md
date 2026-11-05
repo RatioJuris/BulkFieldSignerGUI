@@ -395,8 +395,8 @@ Installation starts only when no operation is running.
 
 | Platform | Package | Type | Status |
 | --- | --- | --- | --- |
-| Windows x64 | `…-windows-x64-portable.zip` | Portable app image with `PDF DSC-TSA Bulk Signer.exe` and bundled runtime, **not an installer** | Built, extracted and started locally; portable update tested end to end locally |
-| Windows x64 | `…-windows-x64.msi` | Per-user installer (no admin), Start menu and desktop shortcuts, own upgrade code (`res/msi-upgrade-code.txt`) | Built with WiX 3.14; install, start, upgrade (2.0.0→2.0.1) and uninstall tested locally |
+| Windows x64 | `…-windows-x64-portable.zip` | Portable app image with `bulksigner.exe` and bundled runtime, **not an installer** | Built, extracted and started locally; portable update tested end to end locally |
+| Windows x64 | `…-windows-x64.msi` | Per-machine installer (UAC) into `C:\Program Files\RatioJuris\BulkFieldSignerGUI\bulksigner.exe`, Start menu and desktop shortcuts, 1.0's upgrade code (`res/msi-upgrade-code.txt`) | Built with WiX 3.14; install, start, 1.0→2.0 upgrade and uninstall tested locally |
 | Windows x64 | `…-windows-x64.msix` | Microsoft Store package (full trust) | Built only in CI (needs Windows SDK). Without Partner Center identity variables it is a `-validation` package. **Not submitted or published.** |
 | Linux x64 / arm64 | `…-linux-<arch>.tar.gz`, `.deb` | Portable archive; Debian package installing to `/opt/pdf-dsc-tsa-bulk-signer` | Built and started in CI |
 | macOS arm64 / x64 | `…-macos-<arch>.dmg` | Disk image | Built in CI. **Not signed with a Developer ID and not notarized.** |
@@ -405,8 +405,12 @@ Installation starts only when no operation is running.
 - **Vendor field.** The installer manufacturer is "PrajnaBytes International Private Limited -
   RatioJuris", because jpackage builds registry paths from it and `|` is not allowed there. The exact
   attribution stays in the copyright and the app.
-- **Windows 1.0.** Version 1.0 was a per-machine MSI with a different upgrade code. 2.x installs
-  alongside it.
+- **Windows launcher and names.** jpackage runs with `--name bulksigner`, so the launcher is
+  `bulksigner.exe` (lowercase, no spaces or special characters). `Package.displayProductName` then
+  uses `tools/msi-sql.js` to set the MSI's product name and shortcut names to "PDF DSC-TSA Bulk
+  Signer", which users see in Apps & features, the installer and the Start menu.
+- **Windows 1.0.** Version 1.0 was also a per-machine MSI. 2.x uses the same upgrade code, so
+  installing 2.x removes 1.0.
 - **macOS menu name.** It is "PDF DSC-TSA", because macOS limits it to 15 characters.
 - **Checksums.** Every package build writes `SHA256SUMS-<platform>.txt`. Draft releases combine them
   into `SHA256SUMS.txt`.

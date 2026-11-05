@@ -72,27 +72,28 @@ The application signs **one PDF at a time**. Each PDF can carry stamps on as man
 
 ## Download
 
-Version 2.0 has **not yet been published**. When it is, it will be listed on the
-[Releases page](https://github.com/RatioJuris/BulkFieldSignerGUI/releases) with these Windows downloads:
+Download version 2.0 from the
+[Releases page](https://github.com/RatioJuris/BulkFieldSignerGUI/releases). For Windows, choose one of:
 
 | File | What it is |
 | --- | --- |
 | `PDF-DSC-TSA-Bulk-Signer-2.0.0-windows-x64-portable.zip` | **Portable version.** No installation needed. |
-| `PDF-DSC-TSA-Bulk-Signer-2.0.0-windows-x64.msi` | **Installer.** Adds the application to your Start menu. |
+| `PDF-DSC-TSA-Bulk-Signer-2.0.0-windows-x64.msi` | **Installer.** Installs for all users of the computer and adds the application to the Start menu and desktop. |
 | `SHA256SUMS.txt` | Checksums to confirm your download is complete and unaltered. |
 
 The older version 1.0 (named "BulkFieldSignerGUI") is still available on the Releases page.
 
-The application is **not available in the Microsoft Store**. Packages for Linux and macOS are being
-prepared; see [`docs/INSTALL.md`](docs/INSTALL.md).
+The Releases page also has packages for Linux and macOS; see [`docs/INSTALL.md`](docs/INSTALL.md).
 
 Everything the application needs, including Java, is included in the download. You do **not** need
 to install Java or anything else.
 
 ## Installation (Windows)
 
-You need **64-bit Windows 10 or Windows 11**. The application has been tested on Windows 11. You do
-not need administrator rights.
+You need **64-bit Windows 10 or Windows 11**. The application has been tested on Windows 11.
+- The **installer** needs administrator approval once: Windows asks "Do you want to allow this app to
+  make changes to your device?". Click **Yes**.
+- The **portable version** needs no administrator rights.
 
 ### Option 1: Portable version (no installation)
 
@@ -100,7 +101,7 @@ not need administrator rights.
 2. Right-click the file and choose **Extract All…**. Choose a folder you can write to, for example
    `Documents` or a USB drive.
 3. Open the extracted folder **PDF DSC-TSA Bulk Signer 2.0.0**.
-4. Double-click **PDF DSC-TSA Bulk Signer.exe**.
+4. Double-click **bulksigner.exe**.
 
 Do not run the program from inside the ZIP file; extract it first.
 
@@ -113,14 +114,16 @@ means:
 ### Option 2: Installer (MSI)
 
 1. Download the `…-windows-x64.msi` file.
-2. Double-click it and follow the installer.
+2. Double-click it and follow the installer. When Windows asks for permission, click **Yes**.
 3. Start the application from the **Start menu** or the **desktop shortcut**: **PDF DSC-TSA Bulk Signer**.
+
+The program is installed in `C:\Program Files\RatioJuris\BulkFieldSignerGUI` (the program file is
+`bulksigner.exe`).
 
 **To uninstall:** open **Settings → Apps → Installed apps**, find **PDF DSC-TSA Bulk Signer**, and
 choose **Uninstall**. Your settings and signed documents are kept.
 
-**If you have version 1.0 installed:** version 2.0 installs separately and does not remove it. You can
-uninstall "BulkFieldSignerGUI" from **Settings → Apps**; this needs an administrator.
+**If you have version 1.0 installed:** the 2.0 installer removes it automatically and installs 2.0.
 
 ### Windows security warning
 

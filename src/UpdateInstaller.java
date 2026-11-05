@@ -103,7 +103,12 @@ final class UpdateInstaller {
     }
 
     static Path launcher(Path image, Platform.Channel channel) {
-        return channel == Platform.Channel.WINDOWS_PORTABLE ? image.resolve(APP_FOLDER + ".exe") : image.resolve("bin").resolve(APP_FOLDER);
+        return channel == Platform.Channel.WINDOWS_PORTABLE ? image.resolve(Product.WINDOWS_LAUNCHER + ".exe") : image.resolve("bin").resolve(APP_FOLDER);
+    }
+
+    /** jpackage names the launcher's configuration file after the launcher. */
+    static String launcherConfig(Platform.Channel channel) {
+        return (channel == Platform.Channel.WINDOWS_PORTABLE ? Product.WINDOWS_LAUNCHER : APP_FOLDER) + ".cfg";
     }
 
     /** The extracted image must be the expected version, built for this channel, and complete. */
@@ -120,7 +125,7 @@ final class UpdateInstaller {
         } catch (IllegalArgumentException ex) {
             throw new UpdateException(UpdateException.Category.INVALID_PACKAGE, "The package has an invalid version.", ex);
         }
-        Path config = app.resolve(APP_FOLDER + ".cfg");
+        Path config = app.resolve(launcherConfig(channel));
         String expected = "-Dpdfsigner.channel=" + channel.id();
         if (!Files.isRegularFile(config) || Files.readAllLines(config).stream().noneMatch(line -> line.strip().endsWith(expected))) {
             throw new UpdateException(UpdateException.Category.INVALID_PACKAGE, "The package was not built for " + channel + ".");
@@ -138,13 +143,15 @@ final class UpdateInstaller {
         Path log = AppPaths.LOGS.resolve("msi-update-" + version + ".log");
         // Paths are produced by this application, never taken from release metadata. Windows paths cannot contain '"'.
         String arguments = "/i \"" + msi.toAbsolutePath() + "\" /passive /norestart /l*v \"" + log + "\"";
-        String script = "$ErrorActionPreference = 'Stop'; Wait-Process -Id " + ProcessHandle.current().pid() + " -ErrorAction SilentlyContinue; "
-                + "$p = Start-Process -FilePath 'msiexec.exe' -ArgumentList " + powershellString(arguments) + " -Wait -PassThru; "
-                + "if ($p.ExitCode -eq 0 -or $p.ExitCode -eq 3010) { Start-Process -FilePath " + powershellString(Path.of(appPath).toString()) + " }";
+        // The installation is per-machine (Program Files), so Windows asks for administrator approval. The
+        // application is started again either way: the new version after an upgrade, otherwise the old one.
+        String script = "Wait-Process -Id " + ProcessHandle.current().pid() + " -ErrorAction SilentlyContinue; "
+                + "try { Start-Process -FilePath 'msiexec.exe' -ArgumentList " + powershellString(arguments) + " -Verb RunAs -Wait } catch { }; "
+                + "Start-Process -FilePath " + powershellString(Path.of(appPath).toString());
         new ProcessBuilder("powershell.exe", "-NoProfile", "-NonInteractive", "-WindowStyle", "Hidden", "-Command", script)
                 .redirectErrorStream(true).redirectOutput(ProcessBuilder.Redirect.appendTo(AppPaths.LOGS.resolve("application.log").toFile())).start();
         return new Result(Outcome.EXIT_FOR_INSTALLER, "Windows Installer will install version " + version
-                + " as soon as this window closes, then start it again. Installer log: " + log);
+                + " as soon as this window closes, then start it again. Windows will ask for administrator approval. Installer log: " + log);
     }
 
     static String powershellString(String value) { return "'" + value.replace("'", "''") + "'"; }
