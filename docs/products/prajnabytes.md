@@ -10,7 +10,8 @@ Source: <https://github.com/RatioJuris/BulkFieldSignerGUI>
 
 ## Overview
 
-PDF DSC-TSA Bulk Signer is a Windows desktop application for advocates, firms,
+PDF DSC-TSA Bulk Signer is a desktop application for Windows, with packages for
+Linux and macOS, for advocates, firms,
 offices and other professionals who need a visible signature mark on many
 pages of a PDF.
 
@@ -113,7 +114,7 @@ The sealed sample document, with its stamp:
 ## System requirements
 
 * **Operating system:** Windows, 64-bit (x64). Built and tested on Windows 11 Pro
-  (version 10.0.22631). Other Windows versions: TODO (not yet verified).
+  (version 10.0.22631). Other Windows versions have not been tested yet.
 * **Installation:** the installer installs for all users in
   `C:\Program Files\RatioJuris\BulkFieldSignerGUI` and asks for administrator
   approval once. The portable version needs no installation and no
