@@ -130,7 +130,11 @@ The sealed sample document, with its stamp:
   connection.
 * **Limits:** PDFs up to 256 MiB and 10,000 pages; up to 10,000 stamps per
   document.
-* **Memory and disk space:** TODO (not yet measured).
+* **Disk space:** about 90 MB for the application (Windows portable version,
+  including its Java runtime), plus space for your signed PDFs.
+* **Memory:** about 180 MB when the application is open and idle (measured on
+  Windows 11). Large PDFs need more; the requirement for the largest supported
+  documents has not been measured.
 
 ## Security and signing notes
 
