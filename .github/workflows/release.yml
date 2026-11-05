@@ -90,6 +90,8 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           set -euo pipefail
+          # Server runners lack the desktop menu folders that desktop Linux provides; the package's menu entry needs them.
+          sudo mkdir -p /etc/xdg/menus /usr/share/desktop-directories /usr/share/applications
           sudo XDG_UTILS_DEBUG_LEVEL=2 apt-get install -y ./dist/*.deb
           launcher=$(dpkg -L pdf-dsc-tsa-bulk-signer | grep -E '/bin/[^/]+$' | head -n1)
           echo "Installed launcher: $launcher"
@@ -103,7 +105,7 @@ jobs:
         run: |
           set -euo pipefail
           # The disk image shows the GPL as a licence agreement; accept it non-interactively in CI.
-          yes | PAGER=cat hdiutil attach -nobrowse -mountpoint "$RUNNER_TEMP/dmg" dist/*.dmg > /dev/null
+          (yes || true) | PAGER=cat hdiutil attach -nobrowse -mountpoint "$RUNNER_TEMP/dmg" dist/*.dmg > /dev/null
           app="$RUNNER_TEMP/dmg/PDF DSC-TSA Bulk Signer.app"
           file "$app/Contents/MacOS/PDF DSC-TSA Bulk Signer"
           "$app/Contents/MacOS/PDF DSC-TSA Bulk Signer" "--smoke-test=$RUNNER_TEMP/dmg-smoke.txt" || true

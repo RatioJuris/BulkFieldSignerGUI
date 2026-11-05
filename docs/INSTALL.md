@@ -53,7 +53,9 @@ No root rights are needed. Updates are installed next to the extracted folder.
 ```sh
 sudo apt install ./PDF-DSC-TSA-Bulk-Signer-2.0.0-linux-x64.deb
 ```
-This installs to `/opt/pdf-dsc-tsa-bulk-signer` with a menu entry (Office). When an update is
+This installs to `/opt/pdf-dsc-tsa-bulk-signer` with a menu entry (Office). The package is
+meant for desktop Linux; on minimal or server systems without desktop menus, use the portable
+`.tar.gz` instead. When an update is
 available, the application downloads and verifies the new `.deb` and opens it with your software
 installer, which asks for administrator rights.
 
