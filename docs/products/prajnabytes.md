@@ -114,12 +114,16 @@ The sealed sample document, with its stamp:
 
 * **Operating system:** Windows, 64-bit (x64). Built and tested on Windows 11 Pro
   (version 10.0.22631). Other Windows versions: TODO (not yet verified).
-* **Account:** a standard Windows user account. No administrator rights,
-  installer, registry changes, Windows service or system certificate-store
-  changes are needed.
-* **Runtime:** Microsoft Build of OpenJDK 25 and Apache Maven, downloaded and
-  checksum-verified automatically by `build.bat` into your user profile. A
-  Java 21 or newer JDK is needed once to start the build.
+* **Account:** a standard Windows user account. No administrator rights are
+  needed: the installer installs for your user only, and the portable version
+  needs no installation. No Windows service or system certificate-store changes
+  are made.
+* **Linux and macOS:** packages for Linux (x64, arm64) and macOS (Apple
+  silicon, Intel) are built, installed and started by automated tests. Signing
+  with a real DSC token on Linux or macOS has not been verified. The macOS app
+  is not signed with an Apple Developer ID or notarized.
+* **Runtime:** included in every download (Microsoft Build of OpenJDK 25);
+  nothing else needs to be installed.
 * **For DSC signing:** a Digital Signature Certificate available in your Windows
   account, for example through your USB token's driver.
 * **For timestamp seals and optional signature timestamps:** an internet
@@ -168,16 +172,16 @@ Developed by **PrajnaBytes International Private Limited | RatioJuris**.
 ## Source code and download
 
 * **Source code:** <https://github.com/RatioJuris/BulkFieldSignerGUI>
-* **Download:** TODO: link the GitHub release for version 2.0 once it is
-  published. At the time of writing the repository's only release is v1.0.0,
-  so version 2.0 is available by building from the repository source with
-  `build.bat`.
+* **Download:** <https://github.com/RatioJuris/BulkFieldSignerGUI/releases/tag/v2.0.0>.
+  For Windows, choose the installer (`.msi`, installs for your user without
+  administrator rights) or the portable `.zip`. Packages for Linux (`.deb`,
+  `.tar.gz`) and macOS (`.dmg`) are also attached; see the system requirements
+  for their status.
 
 ## Get started
 
-Visit the [GitHub repository](https://github.com/RatioJuris/BulkFieldSignerGUI)
-to get the source code, build PDF DSC-TSA Bulk Signer 2.0 on your Windows
-computer, and start stamping and signing your documents.
+[Download PDF DSC-TSA Bulk Signer 2.0](https://github.com/RatioJuris/BulkFieldSignerGUI/releases/tag/v2.0.0)
+for your computer, open your PDF, and start stamping and signing your documents.
 
 ## Screenshot index
 

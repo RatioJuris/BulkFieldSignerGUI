@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.0.0 (unreleased)
+## 2.0.0 (2026-11-05)
 
 PDF DSC-TSA Bulk Signer 2.0, developed by PrajnaBytes International Private Limited | RatioJuris.
 Licensed under the GNU General Public License v3.0 or later (previously a proprietary EULA).
