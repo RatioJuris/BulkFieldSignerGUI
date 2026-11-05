@@ -19,6 +19,8 @@ Licensed under the GNU General Public License v3.0 or later (previously a propri
 - GitHub-based automatic updates with signed release metadata and Type A (mandatory), B (important)
   and C (optional) classifications
 - Version 2.0 installs alongside 1.0; uninstall 1.0 separately (it was installed for all users)
+- Verified after release: DSC signing with a real HyperPKI HYP2003 token (Verasys DSC) on Windows 11,
+  with and without a DigiCert timestamp
 
 ## 1.0.0
 

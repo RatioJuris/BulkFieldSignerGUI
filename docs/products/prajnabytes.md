@@ -124,7 +124,9 @@ The sealed sample document, with its stamp:
 * **Runtime:** included in every download (Microsoft Build of OpenJDK 25);
   nothing else needs to be installed.
 * **For DSC signing:** a Digital Signature Certificate available in your Windows
-  account, for example through your USB token's driver.
+  account, for example through your USB token's driver. Tested with a real
+  HyperPKI HYP2003 USB token and a Verasys-issued DSC on Windows 11, with and
+  without a DigiCert timestamp; the token's own PIN window is used.
 * **For timestamp seals and optional signature timestamps:** an internet
   connection.
 * **Limits:** PDFs up to 256 MiB and 10,000 pages; up to 10,000 stamps per
