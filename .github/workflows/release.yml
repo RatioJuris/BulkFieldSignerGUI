@@ -1,0 +1,187 @@
+# PDF DSC-TSA Bulk Signer — multi-platform build, test and packaging.
+#
+# Every run builds, tests, packages and smoke-tests the application on each platform and uploads the
+# packages, SHA-256 checksums and logs as workflow artifacts. A GitHub release is only ever created as a
+# DRAFT, from an existing tag, when a vX.Y.Z tag is pushed or a manual run explicitly asks for it. Nothing is
+# published automatically: the maintainer reviews the draft, attaches the signed update manifest
+# (tools/ReleaseTool.java, run offline) and publishes it.
+name: Release build
+
+on:
+  workflow_dispatch:
+    inputs:
+      create_draft_release:
+        description: "Create a DRAFT GitHub release from an existing tag (nothing is published)"
+        type: boolean
+        default: false
+      release_tag:
+        description: "Existing tag for the draft release, e.g. v2.0.0 (required with create_draft_release)"
+        type: string
+        default: ""
+  push:
+    tags: ["v[0-9]+.[0-9]+.[0-9]+"]
+    # Release-preparation branches build, test and package only; they never create a release.
+    branches: ["release-*-prep"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.platform }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { runner: windows-latest,   platform: windows-x64, formats: "portable,msi,msix" }
+          - { runner: ubuntu-latest,    platform: linux-x64,   formats: "portable,deb" }
+          - { runner: ubuntu-24.04-arm, platform: linux-arm64, formats: "portable,deb" }
+          - { runner: macos-latest,     platform: macos-arm64, formats: "dmg" }
+          - { runner: macos-15-intel,   platform: macos-x64,   formats: "dmg" }
+    defaults:
+      run:
+        shell: bash
+    env:
+      APP_HOME: ${{ github.workspace }}/target/app-home
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Microsoft Build of OpenJDK 25
+        uses: actions/setup-java@v6
+        with:
+          distribution: microsoft
+          java-version: "25"
+          cache: maven
+
+      - name: Verify runner architecture matches ${{ matrix.platform }}
+        run: |
+          java -XshowSettings:properties -version 2>&1 | grep -E 'os.arch|java.vendor =|java.version ='
+          arch=$(java -XshowSettings:properties -version 2>&1 | awk -F'= ' '/os.arch/{print $2}' | tr -d '\r')
+          case "$arch" in amd64|x86_64) arch=x64 ;; aarch64|arm64) arch=arm64 ;; esac
+          case "${{ matrix.platform }}" in *-"$arch") echo "Architecture verified: $arch" ;; *) echo "Expected ${{ matrix.platform }}, runner is $arch"; exit 1 ;; esac
+
+      - name: Build and run the test suite
+        run: mvn -B -ntp -C verify "-Dapp.home=$APP_HOME" 2>&1 | tee build.log
+
+      - name: Ensure WiX Toolset 3.14 (MSI)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          if (Test-Path 'C:\Program Files (x86)\WiX Toolset v3.14\bin\candle.exe') { Write-Host 'WiX 3.14 is preinstalled on this runner.' }
+          else { choco install wixtoolset --version 3.14.1 -y --no-progress }
+
+      - name: Install packaging prerequisites (Linux)
+        if: runner.os == 'Linux'
+        # xdg-utils and desktop-file-utils are present on desktop Linux; the .deb uses them to add its menu entry.
+        run: sudo apt-get update && sudo apt-get install -y xvfb fakeroot xdg-utils desktop-file-utils
+
+      - name: Package and smoke-test
+        run: |
+          args=(tools/Package.java --build "$APP_HOME/build" --out dist --formats "${{ matrix.formats }}" --smoke)
+          if [ "$RUNNER_OS" = "Windows" ]; then args+=(--wix "C:\\Program Files (x86)\\WiX Toolset v3.14\\bin"); fi
+          if [ -n "${{ vars.MSIX_IDENTITY_NAME }}" ]; then
+            args+=(--msix-name "${{ vars.MSIX_IDENTITY_NAME }}" --msix-publisher "${{ vars.MSIX_PUBLISHER }}" --msix-publisher-name "${{ vars.MSIX_PUBLISHER_NAME }}")
+          fi
+          if [ "$RUNNER_OS" = "Linux" ]; then xvfb-run -a java "${args[@]}"; else java "${args[@]}"; fi 2>&1 | tee package.log
+
+      - name: Install, launch and remove the .deb
+        if: runner.os == 'Linux'
+        run: |
+          set -euo pipefail
+          sudo XDG_UTILS_DEBUG_LEVEL=2 apt-get install -y ./dist/*.deb
+          launcher=$(dpkg -L pdf-dsc-tsa-bulk-signer | grep -E '/bin/[^/]+$' | head -n1)
+          echo "Installed launcher: $launcher"
+          xvfb-run -a "$launcher" "--smoke-test=$RUNNER_TEMP/deb-smoke.txt" || true
+          cat "$RUNNER_TEMP/deb-smoke.txt"
+          grep -q 'result=OK' "$RUNNER_TEMP/deb-smoke.txt"
+          sudo apt-get remove -y pdf-dsc-tsa-bulk-signer
+
+      - name: Mount, launch and detach the .dmg
+        if: runner.os == 'macOS'
+        run: |
+          set -euo pipefail
+          # The disk image shows the GPL as a licence agreement; accept it non-interactively in CI.
+          yes | PAGER=cat hdiutil attach -nobrowse -mountpoint "$RUNNER_TEMP/dmg" dist/*.dmg > /dev/null
+          app="$RUNNER_TEMP/dmg/PDF DSC-TSA Bulk Signer.app"
+          file "$app/Contents/MacOS/PDF DSC-TSA Bulk Signer"
+          "$app/Contents/MacOS/PDF DSC-TSA Bulk Signer" "--smoke-test=$RUNNER_TEMP/dmg-smoke.txt" || true
+          hdiutil detach "$RUNNER_TEMP/dmg"
+          cat "$RUNNER_TEMP/dmg-smoke.txt"
+          grep -q 'result=OK' "$RUNNER_TEMP/dmg-smoke.txt"
+          codesign -dv "$app" 2>&1 || echo "Not signed with a Developer ID (expected without Apple credentials)."
+
+      - name: Validate MSIX (sign with a throwaway test certificate, install, remove)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $msix = Get-ChildItem dist\*.msix | Select-Object -First 1
+          $kit = Get-ChildItem 'C:\Program Files (x86)\Windows Kits\10\bin' -Recurse -Filter signtool.exe | Where-Object { $_.Directory.Name -eq 'x64' } | Sort-Object FullName | Select-Object -Last 1
+          [xml]$manifest = & { Add-Type -AssemblyName System.IO.Compression.FileSystem; $zip = [IO.Compression.ZipFile]::OpenRead($msix.FullName); try { (New-Object IO.StreamReader($zip.GetEntry('AppxManifest.xml').Open())).ReadToEnd() } finally { $zip.Dispose() } }
+          $publisher = $manifest.Package.Identity.Publisher
+          Write-Host "Package identity: $($manifest.Package.Identity.Name), publisher $publisher"
+          # A throwaway certificate whose subject matches the manifest publisher, only to install the package on this runner.
+          $cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject $publisher -CertStoreLocation Cert:\CurrentUser\My -NotAfter (Get-Date).AddDays(1)
+          $test = Join-Path $env:RUNNER_TEMP 'msix-test.msix'
+          Copy-Item $msix.FullName $test
+          & $kit.FullName sign /fd SHA256 /sha1 $cert.Thumbprint /s My $test
+          Export-Certificate -Cert $cert -FilePath (Join-Path $env:RUNNER_TEMP 'msix-test.cer') | Out-Null
+          Import-Certificate -FilePath (Join-Path $env:RUNNER_TEMP 'msix-test.cer') -CertStoreLocation Cert:\LocalMachine\TrustedPeople | Out-Null
+          Add-AppxPackage -Path $test
+          $installed = Get-AppxPackage -Name $manifest.Package.Identity.Name
+          if (-not $installed) { throw 'MSIX package did not install' }
+          Write-Host "Installed: $($installed.PackageFullName) at $($installed.InstallLocation)"
+          Remove-AppxPackage -Package $installed.PackageFullName
+          Write-Host 'MSIX install and removal succeeded. Launch inside the package container is not automated.'
+
+      - name: Collect checksums
+        run: cat dist/SHA256SUMS-*.txt
+
+      - name: Upload packages
+        uses: actions/upload-artifact@v7
+        with:
+          name: packages-${{ matrix.platform }}
+          path: dist/
+          if-no-files-found: error
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: logs-${{ matrix.platform }}
+          path: |
+            build.log
+            package.log
+            target/package-work/**/*.log
+            target/package-work/**/smoke-*.txt
+            target/app-home/build/surefire-reports/
+          if-no-files-found: warn
+
+  draft-release:
+    name: Draft GitHub release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.create_draft_release)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: packages-*
+          path: dist
+          merge-multiple: true
+      - name: Create a DRAFT release from the existing tag (not published)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || inputs.release_tag }}
+        run: |
+          set -euo pipefail
+          if [ -z "$TAG" ]; then echo "release_tag is required"; exit 1; fi
+          version="${TAG#v}"
+          cat dist/SHA256SUMS-*.txt | grep -v -- '-validation.msix' > dist/SHA256SUMS.txt
+          rm -f dist/SHA256SUMS-*.txt dist/*-validation.msix
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --draft --verify-tag \
+            --title "PDF DSC-TSA Bulk Signer $version" \
+            --notes "Draft created by the release workflow. Before publishing: review the packages, attach update-manifest.json and update-manifest.json.sig (tools/ReleaseTool.java), and write the release notes." \
+            dist/*

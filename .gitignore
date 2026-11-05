@@ -1,0 +1,18 @@
+# Build output
+target/
+
+# Local-only: bootstrap JDK, legacy libraries, personal settings and working folders
+jdk/
+lib/
+settings.properties
+sessions/
+placeholders/
+
+# Never commit signing keys or certificates
+*.pk8
+*.pfx
+*.p12
+release-signing/
+
+# Local agent instructions; not published
+AGENTS.md
